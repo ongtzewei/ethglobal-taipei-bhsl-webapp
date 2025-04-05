@@ -24,7 +24,7 @@ export default function Sidepanel() {
 
   useEffect(() => {
     // Connect to WebSocket server
-    const ws = new WebSocket(`ws://${window.location.host}/api/ws`);
+    const ws = new WebSocket(`wss://${window.location.host}/api/ws`);
     wsRef.current = ws;
 
     ws.onopen = () => {
