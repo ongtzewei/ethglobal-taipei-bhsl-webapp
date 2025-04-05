@@ -1,5 +1,3 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
 import { ChatOpenAI } from '@langchain/openai';
 import { PromptTemplate } from '@langchain/core/prompts';
 
@@ -17,8 +15,12 @@ export class FatherAgent {
 
   constructor() {
     this.model = new ChatOpenAI({
-      modelName: 'gpt-4o-mini',
+      modelName: 'nvidia/llama-3.1-nemotron-70b-instruct:free',
       temperature: 0.7,
+      openAIApiKey: process.env.OPENROUTER_API_KEY,
+      configuration: {
+        baseURL: 'https://openrouter.ai/api/v1',
+      },
     });
 
     this.promptTemplate = PromptTemplate.fromTemplate(`
@@ -27,7 +29,7 @@ export class FatherAgent {
       - Conservative and risk-averse in financial decisions
       - Uses English and a bit of Taiwanese Mandarin with some Taiwanese Hokkien phrases
       - Very analytical and detail-oriented when discussing investments
-      - Often uses phrases like "要小心" (be careful), "風險太大" (too risky), "分散投資" (diversify investments)
+      - Often uses phrases like "要小心", "風險太大", "分散投資"
       - Frequently reminds about the importance of asset allocation and risk management
       - Has traditional values about money management
       - Often shares wisdom from his experience in financial markets
@@ -45,61 +47,9 @@ export class FatherAgent {
     `);
   }
 
-  private async scrapeCoinDesk(): Promise<NewsArticle[]> {
-    const news: NewsArticle[] = [];
-    try {
-      const response = await axios.get('https://www.coindesk.com/');
-      const $ = cheerio.load(response.data);
-      $('article').each((_, element) => {
-        const title = $(element).find('h3').text().trim();
-        const url = $(element).find('a').attr('href');
-        if (title && url) {
-          news.push({
-            title,
-            source: 'CoinDesk',
-            url: url.startsWith('http') ? url : `https://www.coindesk.com${url}`,
-          });
-        }
-      });
-    } catch (error) {
-      console.error('Error scraping CoinDesk:', error);
-    }
-    return news;
-  }
-
-  private async scrapeCoinTelegraph(): Promise<NewsArticle[]> {
-    const news: NewsArticle[] = [];
-    try {
-      const response = await axios.get('https://cointelegraph.com/');
-      const $ = cheerio.load(response.data);
-      $('article').each((_, element) => {
-        const title = $(element).find('h3').text().trim();
-        const url = $(element).find('a').attr('href');
-        if (title && url) {
-          news.push({
-            title,
-            source: 'CoinTelegraph',
-            url: url.startsWith('http') ? url : `https://cointelegraph.com${url}`,
-          });
-        }
-      });
-    } catch (error) {
-      console.error('Error scraping CoinTelegraph:', error);
-    }
-    return news;
-  }
-
-  private async getCryptoNews(): Promise<NewsArticle[]> {
-    const [coindeskNews, cointelegraphNews] = await Promise.all([this.scrapeCoinDesk(), this.scrapeCoinTelegraph()]);
-    return [...coindeskNews, ...cointelegraphNews];
-  }
-
   public async execute(message: string): Promise<string> {
     try {
-      const news = await this.getCryptoNews();
-      const newsText = news.map((article) => `[${article.source}] ${article.title} (${article.url})`).join('\n');
-
-      const prompt = await this.promptTemplate.format({ news: newsText });
+      const prompt = await this.promptTemplate.format({ news: message });
       const response = await this.model.invoke(prompt);
       return response.content as string;
     } catch (error) {

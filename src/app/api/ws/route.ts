@@ -32,14 +32,10 @@ export function SOCKET(client: WebSocket, request: IncomingMessage, server: WebS
       }
     } catch (error) {
       console.error('Error processing message:', error);
-      // Send error message from a random agent
-      const agents = [motherAgent, fatherAgent, sisterAgent, brotherAgent];
-      const randomAgent = agents[Math.floor(Math.random() * agents.length)];
-
       client.send(
         JSON.stringify({
-          senderRole: randomAgent.role,
-          senderName: randomAgent.name,
+          senderRole: motherAgent.role,
+          senderName: motherAgent.name,
           message: '系統好像有點問題，讓我檢查一下。',
         }),
       );
