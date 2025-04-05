@@ -6,4 +6,4 @@ declare interface Window {
     on: (event: string, callback: (params: any) => void) => void;
     removeListener: (event: string, callback: (params: any) => void) => void;
   };
-} 
+}

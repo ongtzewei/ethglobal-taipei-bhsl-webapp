@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { createWalletClient, custom } from 'viem';
 import { mainnet } from 'viem/chains';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 interface MenubarProps {
   onAccountChange: (account: string | null) => void;
@@ -18,9 +18,9 @@ export default function Menubar({ onAccountChange }: MenubarProps) {
       if (window.ethereum) {
         const client = createWalletClient({
           chain: mainnet,
-          transport: custom(window.ethereum)
+          transport: custom(window.ethereum),
         });
-        
+
         const [address] = await client.requestAddresses();
         onAccountChange(address);
       } else {
@@ -41,11 +41,7 @@ export default function Menubar({ onAccountChange }: MenubarProps) {
             <span className="text-xl font-bold">Buy High, Sell Low</span>
           </div>
           <div className="flex items-center">
-            <Button
-              onClick={connectWallet}
-              disabled={isConnecting}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
+            <Button variant={'secondary'} onClick={connectWallet} disabled={isConnecting}>
               {isConnecting ? 'Connecting...' : 'Connect with Metamask'}
             </Button>
           </div>
@@ -53,4 +49,4 @@ export default function Menubar({ onAccountChange }: MenubarProps) {
       </div>
     </nav>
   );
-} 
+}

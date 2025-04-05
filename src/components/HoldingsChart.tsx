@@ -25,7 +25,7 @@ export default function HoldingsChart({ address }: { address: string | null }) {
         setIsLoading(true);
         const client = createPublicClient({
           chain: mainnet,
-          transport: http()
+          transport: http(),
         });
 
         // Get ETH balance
@@ -94,4 +94,4 @@ export default function HoldingsChart({ address }: { address: string | null }) {
       </ResponsiveContainer>
     </div>
   );
-} 
+}

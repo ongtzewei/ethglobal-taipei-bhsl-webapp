@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Menubar from "@/components/Menubar";
-import Sidepanel from "@/components/Sidepanel";
-import HoldingsChart from "@/components/HoldingsChart";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import Menubar from '@/components/Menubar';
+import Sidepanel from '@/components/Sidepanel';
+import HoldingsChart from '@/components/HoldingsChart';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 export default function Home() {
   const [account, setAccount] = useState<string | null>(null);

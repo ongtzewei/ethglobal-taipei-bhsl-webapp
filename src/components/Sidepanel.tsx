@@ -1,11 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
 import ChatMessage from './ChatMessage';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
 interface Message {
   sender: string;
@@ -17,39 +17,45 @@ interface Message {
 export default function Sidepanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     // Connect to WebSocket server
-    const newSocket = io('http://localhost:3001', {
-      transports: ['websocket'],
-    });
+    const ws = new WebSocket(`ws://${window.location.host}/api/ws`);
+    wsRef.current = ws;
 
-    newSocket.on('connect', () => {
+    ws.onopen = () => {
       setIsConnected(true);
-      console.log('Connected to WebSocket server');
-    });
+      console.log('WebSocket connection established');
+    };
 
-    newSocket.on('disconnect', () => {
+    ws.onmessage = (event) => {
+      console.log('Received message:', event.data);
+      const data = JSON.parse(event.data);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: data.sender,
+          message: data.message,
+          timestamp: new Date(),
+          isUser: false,
+        },
+      ]);
+    };
+
+    ws.onclose = () => {
       setIsConnected(false);
-      console.log('Disconnected from WebSocket server');
-    });
+      console.log('WebSocket connection closed');
+    };
 
-    newSocket.on('agent_message', (data: { agent: string; message: string }) => {
-      setMessages(prev => [...prev, {
-        sender: data.agent,
-        message: data.message,
-        timestamp: new Date(),
-        isUser: false
-      }]);
-    });
-
-    setSocket(newSocket);
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
 
     return () => {
-      newSocket.close();
+      ws.close();
     };
   }, []);
 
@@ -59,29 +65,30 @@ export default function Sidepanel() {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!socket || !inputMessage.trim()) return;
+    if (!wsRef.current || !inputMessage.trim()) return;
 
     const message = inputMessage.trim();
-    setMessages(prev => [...prev, {
-      sender: 'You',
-      message,
-      timestamp: new Date(),
-      isUser: true
-    }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: 'You',
+        message,
+        timestamp: new Date(),
+        isUser: true,
+      },
+    ]);
 
-    socket.emit('user_message', { message });
+    wsRef.current.send(JSON.stringify({ message }));
     setInputMessage('');
   };
 
   return (
-    <Card className="w-[30%] h-[calc(100vh-4rem)] fixed right-0 top-16 flex flex-col">
+    <Card className="w-[30%] h-[calc(100vh-4rem)] fixed right-0 top-16 flex flex-col rounded-none">
       <CardHeader className="border-b">
         <h2 className="text-lg font-semibold">Chat with Agents</h2>
-        <div className="text-xs text-gray-500">
-          {isConnected ? 'Connected' : 'Connecting...'}
-        </div>
+        <div className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Connecting...'}</div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 overflow-y-auto p-4">
         {messages.map((msg, index) => (
           <ChatMessage
@@ -105,10 +112,7 @@ export default function Sidepanel() {
               placeholder="Type your message..."
               disabled={!isConnected}
             />
-            <Button
-              type="submit"
-              disabled={!isConnected || !inputMessage.trim()}
-            >
+            <Button type="submit" disabled={!isConnected || !inputMessage.trim()}>
               Send
             </Button>
           </div>
@@ -116,4 +120,4 @@ export default function Sidepanel() {
       </CardFooter>
     </Card>
   );
-} 
+}

@@ -5,8 +5,9 @@
   "scripts": {
     "build": "next build",
     "clean": "rm -rf .next",
-    "lint": "next lint",
-    "prepare": "husky",
+    "lint": "next lint && pnpm prettier",
+    "prepare": "husky && next-ws patch",
+    "prettier": "prettier --write .",
     "start": "next build && next start",
     "start:dev": "next dev --turbopack",
     "start:prod": "pnpm start",
@@ -21,13 +22,15 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.487.0",
     "next": "15.2.4",
+    "next-ws": "^2.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.2",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.1.0",
     "tw-animate-css": "^1.2.5",
-    "viem": "^2.25.0"
+    "viem": "^2.25.0",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -35,9 +38,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "eslint-config-prettier": "^10.1.1",
     "husky": "^9.1.7",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
