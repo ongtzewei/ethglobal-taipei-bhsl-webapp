@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
 interface Message {
-  senderRole: 'father' | 'mother' | 'sister' | 'brother';
+  senderRole: 'user' | 'father' | 'mother' | 'sister' | 'brother';
   senderName: string;
   message: string;
   timestamp: Date;

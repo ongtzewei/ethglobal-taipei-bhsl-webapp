@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { createWalletClient, custom } from 'viem';
 import { mainnet } from 'viem/chains';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,9 @@ export default function Menubar({ onAccountChange }: MenubarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <span className="text-xl font-bold">Buy High, Sell Low</span>
+            <Link href="/" className="text-xl font-bold">
+              Buy High, Sell Low
+            </Link>
           </div>
           <div className="flex items-center">
             {address && (

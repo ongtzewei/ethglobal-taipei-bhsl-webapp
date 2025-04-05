@@ -11,9 +11,21 @@ interface TokenHolding {
   value: number;
   color: string;
   symbol: string;
+  price: number;
+}
+
+interface TokenData {
+  contract: {
+    name: string;
+    symbol: string;
+    decimals: number;
+    address: string;
+  };
+  balance: string;
 }
 
 const PROTOCOL_CHAINS: Record<string, string[]> = {
+  base: ['mainnet', 'sepolia'],
   ethereum: ['mainnet', 'sepolia', 'holesky'],
   polygon: ['mainnet', 'amoy'],
   arbitrum: ['mainnet', 'sepolia'],
@@ -46,11 +58,7 @@ export default function HoldingsChart({ address }: { address: string | null }) {
           transport: http(),
         });
 
-        // Get ETH balance
-        const balance = await client.getBalance({ address: address as `0x${string}` });
-        const ethBalance = Number(formatEther(balance));
-
-        const response = await axios
+        await axios
           .post(
             `https://web3.nodit.io/v1/${selectedProtocol}/${selectedChain}/token/getTokensOwnedByAccount`,
             {
@@ -65,19 +73,65 @@ export default function HoldingsChart({ address }: { address: string | null }) {
               },
             },
           )
-          .then((res) => {
+          .then(async (res) => {
             const data = res.data;
             const numTokens = data.count;
             if (numTokens <= 0) return;
 
-            const tokens = data.items;
-            // Flatten the tokens array to contain only name, value, and symbol
-            const tokenHoldings: TokenHolding[] = tokens.map((token) => ({
-              name: token.contract.name,
-              value: Number(token.balance) / Math.pow(10, token.contract.decimals),
-              symbol: token.contract.symbol,
-              color: `hsl(${Math.floor(Math.random() * 360)}, 90%, 70%)`,
-            }));
+            const tokens: TokenData[] = data.items;
+
+            // Get token prices from CoinGecko
+            const tokenAddresses = tokens.map((token) => token.contract.address);
+
+            const response = await axios
+              .post(
+                `https://web3.nodit.io/v1/${selectedProtocol}/${selectedChain}/token/getTokenPricesByContracts`,
+                {
+                  contractAddresses: tokenAddresses,
+                  currency: 'USD',
+                },
+                {
+                  headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    'X-API-KEY': process.env.NEXT_PUBLIC_NODIT_API_KEY,
+                  },
+                },
+              )
+              .catch((err) => console.error(err));
+
+            // @ts-expect-error: ignore
+            const tokenPrices = response.data;
+
+            const prices = tokenPrices.reduce(
+              // @ts-expect-error: ignore
+              (acc, tokenPrice) => {
+                const address = tokenPrice.contract.address.toLowerCase();
+                acc[address] = {
+                  price: tokenPrice.price ? Number(tokenPrice.price) : 0,
+                  updatedAt: tokenPrice.updatedAt,
+                };
+                return acc;
+              },
+              {} as Record<string, { price: number; updatedAt: string | null }>,
+            );
+
+            // Calculate token values with market prices
+            const tokenHoldings: TokenHolding[] = tokens
+              .map((token) => {
+                const tokenAmount = Number(token.balance) / Math.pow(10, token.contract.decimals);
+                const tokenPrice = prices[token.contract.address.toLowerCase()]?.price || 0;
+                const value = tokenAmount * tokenPrice;
+
+                return {
+                  name: token.contract.name,
+                  value,
+                  symbol: token.contract.symbol,
+                  color: `hsl(${Math.floor(Math.random() * 360)}, 90%, 70%)`,
+                  price: tokenPrice,
+                };
+              })
+              .filter((holding) => holding.value > 0);
 
             setHoldings(tokenHoldings);
           })
@@ -153,7 +207,7 @@ export default function HoldingsChart({ address }: { address: string | null }) {
             </Pie>
             <Tooltip
               formatter={(value: number, name: string, props: any) => [
-                `${value.toFixed(4)} ${props.payload.symbol}`,
+                `$${value.toFixed(2)} (${(value / props.payload.price).toFixed(4)} ${props.payload.symbol})`,
                 name,
               ]}
             />

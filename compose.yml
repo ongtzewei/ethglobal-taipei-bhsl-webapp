@@ -3,17 +3,16 @@ networks:
     external: true
 
 services:
-  ethtaipei-bhsl:
+  ethglobal-taipei:
     container_name: bhsl-webapp
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
-      args: 
+      args:
         - GITHUB_CI_TOKEN=
     env_file:
       - ./.env.docker
     ports:
-      - ${PORT}:${PORT}
-    networks: 
+      - 3000:${PORT}
+    networks:
       - playground-network
-
