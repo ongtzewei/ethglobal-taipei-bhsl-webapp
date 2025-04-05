@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createWalletClient, custom } from 'viem';
 import { mainnet } from 'viem/chains';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ interface MenubarProps {
 
 export default function Menubar({ onAccountChange }: MenubarProps) {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
 
   const connectWallet = async () => {
     try {
@@ -22,6 +23,7 @@ export default function Menubar({ onAccountChange }: MenubarProps) {
         });
 
         const [address] = await client.requestAddresses();
+        setAddress(address);
         onAccountChange(address);
       } else {
         alert('Please install MetaMask!');
@@ -41,9 +43,17 @@ export default function Menubar({ onAccountChange }: MenubarProps) {
             <span className="text-xl font-bold">Buy High, Sell Low</span>
           </div>
           <div className="flex items-center">
-            <Button variant={'secondary'} onClick={connectWallet} disabled={isConnecting}>
-              {isConnecting ? 'Connecting...' : 'Connect with Metamask'}
-            </Button>
+            {address && (
+              <Button variant={'secondary'} disabled={true}>
+                Logged in with address
+                {`${address?.substring(0, 4)}...${address?.substring(address.length - 2)}`}
+              </Button>
+            )}
+            {!address && (
+              <Button variant={'default'} onClick={connectWallet} disabled={isConnecting}>
+                {isConnecting ? 'Connecting...' : 'Connect with Metamask'}
+              </Button>
+            )}
           </div>
         </div>
       </div>

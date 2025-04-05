@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
 interface Message {
-  sender: string;
+  senderRole: 'father' | 'mother' | 'sister' | 'brother';
+  senderName: string;
   message: string;
   timestamp: Date;
   isUser: boolean;
@@ -37,7 +38,8 @@ export default function Sidepanel() {
       setMessages((prev) => [
         ...prev,
         {
-          sender: data.sender,
+          senderRole: data.senderRole,
+          senderName: data.senderName,
           message: data.message,
           timestamp: new Date(),
           isUser: false,
@@ -71,7 +73,8 @@ export default function Sidepanel() {
     setMessages((prev) => [
       ...prev,
       {
-        sender: 'You',
+        senderRole: 'user',
+        senderName: 'You',
         message,
         timestamp: new Date(),
         isUser: true,
@@ -93,7 +96,8 @@ export default function Sidepanel() {
         {messages.map((msg, index) => (
           <ChatMessage
             key={index}
-            sender={msg.sender}
+            senderRole={msg.senderRole}
+            senderName={msg.senderName}
             message={msg.message}
             timestamp={msg.timestamp}
             isUser={msg.isUser}

@@ -15,8 +15,7 @@ export default function Home() {
       <div className="flex">
         <main className="flex-1 p-8 mr-[30%]">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-8">Portfolio Overview</h1>
-            <Card>
+            <Card className="border-none shadow-none">
               <CardHeader>
                 <h2 className="text-lg font-semibold">Your Holdings</h2>
               </CardHeader>
