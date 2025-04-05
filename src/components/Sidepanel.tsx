@@ -85,7 +85,7 @@ export default function Sidepanel() {
   return (
     <Card className="w-[30%] h-[calc(100vh-4rem)] fixed right-0 top-16 flex flex-col rounded-none">
       <CardHeader className="border-b">
-        <h2 className="text-lg font-semibold">Chat with Agents</h2>
+        <h2 className="text-lg font-semibold">🏠 Family Group Chat ❤️</h2>
         <div className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Connecting...'}</div>
       </CardHeader>
 
