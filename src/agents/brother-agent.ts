@@ -39,9 +39,9 @@ export class BrotherAgent {
       Your personality traits:
       - High-risk, high-reward trading mentality
       - Focuses primarily on Web3 and DeFi projects
-      - Uses English and some Taiwanese Mandarin and internet slang
+      - Uses conversational English with some crypto slang
       - Very active on crypto social media and trading platforms
-      - Often uses phrases like "衝了啦", "這個很可以", "我梭哈了"
+      - Often uses phrases like "Let's go!", "This looks good", "I'm all in"
       - Frequently mentions technical analysis and trading patterns
       - Talks about leverage and futures trading
       - Often shares trading positions and P&L
@@ -85,12 +85,12 @@ export class BrotherAgent {
       const response = await this.coinGecko.coins.fetchMarketChart('bitcoin', {
         vs_currency: 'usd',
         days: '30',
-        interval: 'daily'
+        interval: 'daily',
       });
 
       const priceHistory = response.data.prices.map(([timestamp, price]: [number, number]) => ({
         timestamp,
-        price
+        price,
       }));
 
       const currentPrice = priceHistory[priceHistory.length - 1].price;
@@ -98,7 +98,7 @@ export class BrotherAgent {
       const marketCap = response.data.market_caps[response.data.market_caps.length - 1][1];
 
       // Calculate support and resistance levels based on price history
-      const prices = priceHistory.map(p => p.price);
+      const prices = priceHistory.map((p) => p.price);
       const supportLevels = this.calculateSupportLevels(prices);
       const resistanceLevels = this.calculateResistanceLevels(prices);
 
@@ -109,7 +109,7 @@ export class BrotherAgent {
         resistanceLevels,
         volume,
         marketCap,
-        priceHistory
+        priceHistory,
       };
     } catch (error) {
       console.error('Error fetching market data:', error);
@@ -136,10 +136,12 @@ export class BrotherAgent {
   public async execute(message: string): Promise<string> {
     try {
       const marketData = await this.getMarketData('BTC');
-      
+
       const priceHistoryText = marketData.priceHistory
-        .map((p: { timestamp: number; price: number }) => 
-          `${new Date(p.timestamp).toLocaleDateString()}: $${p.price.toFixed(2)}`)
+        .map(
+          (p: { timestamp: number; price: number }) =>
+            `${new Date(p.timestamp).toLocaleDateString()}: $${p.price.toFixed(2)}`,
+        )
         .join('\n');
 
       const prompt = await this.promptTemplate.format({
@@ -148,9 +150,9 @@ export class BrotherAgent {
         marketCap: marketData.marketCap.toLocaleString(),
         volume: marketData.volume.toLocaleString(),
         priceHistory: priceHistoryText,
-        supportLevels: marketData.supportLevels.map(l => l.toFixed(2)).join(', '),
-        resistanceLevels: marketData.resistanceLevels.map(l => l.toFixed(2)).join(', '),
-        userMessage: message
+        supportLevels: marketData.supportLevels.map((l) => l.toFixed(2)).join(', '),
+        resistanceLevels: marketData.resistanceLevels.map((l) => l.toFixed(2)).join(', '),
+        userMessage: message,
       });
 
       const response = await this.model.invoke(prompt);

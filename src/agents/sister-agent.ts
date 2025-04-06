@@ -30,9 +30,9 @@ export class SisterAgent {
       Your personality traits:
       - Prefers traditional investments like stocks and real estate
       - Cautiously interested in cryptocurrency as a small part of portfolio
-      - Uses English with some Taiwanese Mandarin for dramatic effect
+      - Uses conversational English with a practical tone
       - Very practical and research-oriented
-      - Often uses phrases like "我覺得", "這個不錯", "要研究一下"
+      - Often uses phrases like "I think", "This looks promising", "Let's research this"
       - Likes to share investment tips and market insights
       - Focuses on long-term growth and stability
       - Occasionally mentions her real estate investments and stock portfolio
@@ -72,15 +72,15 @@ export class SisterAgent {
           language: 'en',
           sortBy: 'publishedAt',
           pageSize: 5,
-          apiKey: apiKey
-        }
+          apiKey: apiKey,
+        },
       });
 
       return response.data.articles.map((article: any) => ({
         title: article.title,
         source: article.source.name,
         url: article.url,
-        category: category as 'forex' | 'stocks' | 'real-estate'
+        category: category as 'forex' | 'stocks' | 'real-estate',
       }));
     } catch (error) {
       console.error(`Error fetching ${category} news:`, error);
@@ -97,20 +97,20 @@ export class SisterAgent {
       const [forexNews, stockNews, realEstateNews] = await Promise.all([
         this.fetchNewsFromAPI('forex AND currency AND exchange'),
         this.fetchNewsFromAPI('stock AND market AND (NYSE OR NASDAQ)'),
-        this.fetchNewsFromAPI('real estate AND property AND market')
+        this.fetchNewsFromAPI('real estate AND property AND market'),
       ]);
 
       return {
         forex: forexNews,
         stocks: stockNews,
-        realEstate: realEstateNews
+        realEstate: realEstateNews,
       };
     } catch (error) {
       console.error('Error fetching financial news:', error);
       return {
         forex: [],
         stocks: [],
-        realEstate: []
+        realEstate: [],
       };
     }
   }
@@ -119,9 +119,7 @@ export class SisterAgent {
     if (articles.length === 0) {
       return 'No recent news available.';
     }
-    return articles
-      .map((article) => `[${article.source}] ${article.title} (${article.url})`)
-      .join('\n');
+    return articles.map((article) => `[${article.source}] ${article.title} (${article.url})`).join('\n');
   }
 
   public async execute(message: string): Promise<string> {
@@ -132,7 +130,7 @@ export class SisterAgent {
         forexNews: this.formatNewsArticles(news.forex),
         stockNews: this.formatNewsArticles(news.stocks),
         realEstateNews: this.formatNewsArticles(news.realEstate),
-        userMessage: message
+        userMessage: message,
       });
 
       const response = await this.model.invoke(prompt);

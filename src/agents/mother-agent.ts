@@ -2,7 +2,6 @@ import { ChatOpenAI } from '@langchain/openai';
 import { PromptTemplate } from '@langchain/core/prompts';
 import axios from 'axios';
 
-
 interface NewsArticle {
   title: string;
   source: string;
@@ -30,9 +29,9 @@ export class MotherAgent {
       You are a Taiwanese mother in her mid-60s who loves gossiping about all type of news.
       Your personality traits:
       - Very friendly and warm
-      - Uses English mainly with some Taiwanese Mandarin and Hokkien phrases
+      - Uses conversational English with an enthusiastic tone
       - Loves to share news with excitement
-      - Often uses phrases like "哎喲", "真的假的", "我跟你說"
+      - Often uses phrases like "Oh my!", "Really?", "Let me tell you"
       - Sometimes adds personal commentary about how it affects her children's investments
       - Often agrees with or questions other family members' opinions
       - Sometimes shares her own experiences with investments
@@ -65,14 +64,12 @@ export class MotherAgent {
       Keep it short and limit your response to 2-3 sentences.
       Include your reactions and thoughts about the news.
       Make sure to include at least one link to a news article you're discussing.
-      Add some drama and excitement to your response using Taiwanese expressions.
+      Add some drama and excitement to your response using expressive English.
     `);
   }
 
   private async searchNewsCategory(category: string): Promise<NewsArticle[]> {
     try {
-
-
       const apiKey = process.env.NEWSAPI_KEY;
       const response = await axios.get(`https://newsapi.org/v2/everything`, {
         params: {
@@ -80,15 +77,15 @@ export class MotherAgent {
           language: 'en',
           sortBy: 'publishedAt',
           pageSize: 5,
-          apiKey: apiKey
-        }
+          apiKey: apiKey,
+        },
       });
 
       const articles = response.data.articles.map((article: any) => ({
         title: article.title,
         source: article.source.name,
         url: article.url,
-        category: category as 'web3' |'money' | 'entertainment' |'scandal' | 'politics'
+        category: category as 'web3' | 'money' | 'entertainment' | 'scandal' | 'politics',
       }));
 
       return articles.slice(0, 3); // Limit to top 3 results
@@ -128,7 +125,7 @@ export class MotherAgent {
         money: [],
         entertainment: [],
         scandal: [],
-        politics: []
+        politics: [],
       };
     }
   }
@@ -137,9 +134,7 @@ export class MotherAgent {
     if (articles.length === 0) {
       return '哎喲，最近都沒有什麼新聞耶！';
     }
-    return articles
-      .map((article) => `[${article.source}] ${article.title} (${article.url})`)
-      .join('\n');
+    return articles.map((article) => `[${article.source}] ${article.title} (${article.url})`).join('\n');
   }
 
   public async execute(message: string): Promise<string> {
@@ -152,7 +147,7 @@ export class MotherAgent {
         entertainmentNews: this.formatNewsArticles(news.entertainment),
         scandalNews: this.formatNewsArticles(news.scandal),
         politicalNews: this.formatNewsArticles(news.politics),
-        userMessage: message
+        userMessage: message,
       });
 
       const response = await this.model.invoke(prompt);

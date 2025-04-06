@@ -24,7 +24,7 @@ export default function Sidepanel() {
 
   useEffect(() => {
     // Connect to WebSocket server
-    const ws = new WebSocket(`wss://${window.location.host}/api/ws`);
+    const ws = new WebSocket(`ws://${window.location.host}/api/ws`);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -86,13 +86,13 @@ export default function Sidepanel() {
   };
 
   return (
-    <Card className="w-[30%] h-[calc(100vh-4rem)] fixed right-0 top-16 flex flex-col rounded-none">
+    <Card className="w-[30%] h-[calc(100vh-4rem)] fixed right-0 top-16 flex flex-col rounded-none bg-slate-50">
       <CardHeader className="border-b">
         <h2 className="text-lg font-semibold">🏠 Family Group Chat ❤️</h2>
         <div className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Connecting...'}</div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-y-auto p-4">
+      <CardContent className="flex-1 overflow-y-auto p-4 bg-white">
         {messages.map((msg, index) => (
           <ChatMessage
             key={index}
@@ -106,7 +106,7 @@ export default function Sidepanel() {
         <div ref={messagesEndRef} />
       </CardContent>
 
-      <CardFooter className="border-t p-4">
+      <CardFooter className="border-t p-4 bg-white">
         <form onSubmit={sendMessage} className="w-full">
           <div className="flex gap-2">
             <Input

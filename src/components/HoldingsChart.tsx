@@ -1,9 +1,9 @@
 'use client';
 
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { createPublicClient, http, formatEther } from 'viem';
+import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
 
 interface TokenHolding {
@@ -24,6 +24,50 @@ interface TokenData {
   balance: string;
 }
 
+const getNativeTokenContract = (protocol: string) => {
+  const nativeTokens: Record<string, { name: string; symbol: string; decimals: number; address: string }> = {
+    ethereum: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+      address: '0x2170ed0880ac9a755fd29b2688956bd959f933f8',
+    },
+    polygon: {
+      name: 'Polygon',
+      symbol: 'POL',
+      decimals: 18,
+      address: '0x455e53cbb86018ac2b8092fdcd39d8444affc3f6',
+    },
+    base: {
+      name: 'Base',
+      symbol: 'BASE',
+      decimals: 18,
+      address: '0xd07379a755a8f11b57610154861d694b2a0f615a',
+    },
+    arbitrum: {
+      name: 'Arbitrum',
+      symbol: 'ARB',
+      decimals: 18,
+      address: '0x912CE59144191C1204E64559FE8253a0e49E6548',
+    },
+    optimism: {
+      name: 'Optimism',
+      symbol: 'OP',
+      decimals: 18,
+      address: '0x4200000000000000000000000000000000000042',
+    },
+  };
+
+  return (
+    nativeTokens[protocol] || {
+      name: protocol.charAt(0).toUpperCase() + protocol.slice(1),
+      symbol: protocol.toUpperCase(),
+      decimals: 18,
+      address: '0x0000000000000000000000000000000000000000',
+    }
+  );
+};
+
 const PROTOCOL_CHAINS: Record<string, string[]> = {
   base: ['mainnet', 'sepolia'],
   ethereum: ['mainnet', 'sepolia', 'holesky'],
@@ -39,6 +83,26 @@ export default function HoldingsChart({ address }: { address: string | null }) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProtocol, setSelectedProtocol] = useState('ethereum');
   const [selectedChain, setSelectedChain] = useState('mainnet');
+  const lastChangeRef = useRef<'protocol' | 'chain' | null>(null);
+
+  useEffect(() => {
+    if (lastChangeRef.current === 'protocol') {
+      setSelectedChain('mainnet');
+    } else if (lastChangeRef.current === 'chain') {
+      setSelectedProtocol('ethereum');
+    }
+    lastChangeRef.current = null;
+  }, [selectedProtocol, selectedChain]);
+
+  const handleProtocolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    lastChangeRef.current = 'protocol';
+    setSelectedProtocol(e.target.value);
+  };
+
+  const handleChainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    lastChangeRef.current = 'chain';
+    setSelectedChain(e.target.value);
+  };
 
   useEffect(() => {
     const availableChains = PROTOCOL_CHAINS[selectedProtocol];
@@ -49,15 +113,38 @@ export default function HoldingsChart({ address }: { address: string | null }) {
 
   useEffect(() => {
     const fetchHoldings = async () => {
+      setHoldings([]);
       if (!address) return;
 
       try {
         setIsLoading(true);
-        const client = createPublicClient({
-          chain: mainnet,
-          transport: http(),
-        });
 
+        // fetch native token
+        const nativeTokenResponse = await axios
+          .post(
+            `https://web3.nodit.io/v1/${selectedProtocol}/${selectedChain}/native/getNativeBalanceByAccount`,
+            {
+              accountAddress: address,
+            },
+            {
+              headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'X-API-KEY': process.env.NEXT_PUBLIC_NODIT_API_KEY,
+              },
+            },
+          )
+          .catch((err) => {
+            console.error(err);
+            return null;
+          });
+
+        if (!nativeTokenResponse) {
+          console.error('Failed to fetch native token balance');
+          return;
+        }
+
+        // fetch all other tokens
         await axios
           .post(
             `https://web3.nodit.io/v1/${selectedProtocol}/${selectedChain}/token/getTokensOwnedByAccount`,
@@ -76,13 +163,18 @@ export default function HoldingsChart({ address }: { address: string | null }) {
           .then(async (res) => {
             const data = res.data;
             const numTokens = data.count;
-            if (numTokens <= 0) return;
 
             const tokens: TokenData[] = data.items;
+            const nativeTokenContract = getNativeTokenContract(selectedProtocol);
+            const nativeTokenBalance = nativeTokenResponse?.data.balance;
 
-            // Get token prices from CoinGecko
+            tokens.push({
+              contract: nativeTokenContract,
+              balance: nativeTokenBalance,
+            });
+
+            // fetch token prices
             const tokenAddresses = tokens.map((token) => token.contract.address);
-
             const response = await axios
               .post(
                 `https://web3.nodit.io/v1/${selectedProtocol}/${selectedChain}/token/getTokenPricesByContracts`,
@@ -132,7 +224,6 @@ export default function HoldingsChart({ address }: { address: string | null }) {
                 };
               })
               .filter((holding) => holding.value > 0);
-
             setHoldings(tokenHoldings);
           })
           .catch((err) => console.error(err));
@@ -165,22 +256,14 @@ export default function HoldingsChart({ address }: { address: string | null }) {
   return (
     <div className="space-y-4">
       <div className="flex gap-4">
-        <select
-          value={selectedProtocol}
-          onChange={(e) => setSelectedProtocol(e.target.value)}
-          className="px-4 py-2 border rounded-md"
-        >
+        <select value={selectedProtocol} onChange={handleProtocolChange} className="px-4 py-2 border rounded-md">
           {PROTOCOLS.map((protocol) => (
             <option key={protocol} value={protocol}>
               {protocol}
             </option>
           ))}
         </select>
-        <select
-          value={selectedChain}
-          onChange={(e) => setSelectedChain(e.target.value)}
-          className="px-4 py-2 border rounded-md"
-        >
+        <select value={selectedChain} onChange={handleChainChange} className="px-4 py-2 border rounded-md">
           {PROTOCOL_CHAINS[selectedProtocol].map((chain) => (
             <option key={chain} value={chain}>
               {chain}
